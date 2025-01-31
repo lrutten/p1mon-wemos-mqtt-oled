@@ -1,17 +1,7 @@
 /***********************************************************************
-  Adafruit MQTT Library ESP32 Adafruit IO SSL/TLS example
+  Shows p1mon MQTT data on the OLED display.
 
-  Use the latest version of the ESP32 Arduino Core:
-    https://github.com/espressif/arduino-esp32
-
-  Works great with Adafruit Huzzah32 Feather and Breakout Board:
-    https://www.adafruit.com/product/3405
-    https://www.adafruit.com/products/4172
-
-  Adafruit invests time and resources providing this open source code,
-  please support Adafruit and open-source hardware by purchasing
-  products from Adafruit!
-
+  Is based on the Adafruit MQTT Library ESP32 Adafruit IO SSL/TLS example
   Written by Tony DiCola for Adafruit Industries.
   Modified by Brent Rubell for Adafruit Industries
   MIT license, all text above must be included in any redistribution
@@ -44,7 +34,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 //#define WLAN_SSID "xxxxx"
 //#define WLAN_PASS "yyyyy"
 
-/************************* Adafruit.io Setup *********************************/
+/************************* MQTT Setup *********************************/
 
 //#define MQTT_SERVER      "vvvvv"
 
@@ -62,8 +52,9 @@ WiFiClientSecure client;
 Adafruit_MQTT_Client mqtt(&client, MQTT_SERVER, MQTT_SERVERPORT, MQTT_USERNAME, MQTT_PASS);
 Adafruit_MQTT_Subscribe p1mon = Adafruit_MQTT_Subscribe(&mqtt, "p1monitor/smartmeter");
 
-// io.adafruit.com root CA
-const char* adafruitio_root_ca = \
+// Used key
+// /etc/ssl/certs/ISRG_Root_X1.pem
+const char* isrg_root_ca = \
 "-----BEGIN CERTIFICATE-----\n"
 "MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw\n"
 "TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh\n"
@@ -152,8 +143,8 @@ void setup()
    Serial.println("WiFi connected");
    Serial.println("IP address: "); Serial.println(WiFi.localIP());
 
-   // Set Adafruit IO's root CA
-   client.setCACert(adafruitio_root_ca);
+   // Set ISRG root CA
+   client.setCACert(isrg_root_ca);
    mqtt.subscribe(&p1mon);
 }
 
@@ -236,6 +227,8 @@ void loop()
                kmax = k170;
             }
          }
+
+         // current power
          char buf[25];
          sprintf(buf, "mo %5.3lf", k170);
          Serial.println(buf);
@@ -247,18 +240,17 @@ void loop()
          display.setCursor(dx, dy + 0*h);
          display.println(buf);
 
+         // minimum power
          sprintf(buf, "mi %5.3lf", kmin);
          display.setCursor(dx, dy + 1*h);
          display.println(buf);
 
+         // maximum power
          sprintf(buf, "ma %5.3lf", kmax);
          display.setCursor(dx, dy + 2*h);
          display.println(buf);
 
          display.display();
-
-         //uint16_t sliderval = atoi((char *)slider.lastread);  // convert to a number
-         //analogWrite(PWMOUT, sliderval);
       }
    }
 
